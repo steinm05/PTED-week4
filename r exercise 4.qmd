@@ -1,0 +1,325 @@
+---
+title: "r exercise 4"
+format: html
+---
+
+Delete R memory
+```{r}
+rm(list=ls())
+
+```
+
+# Libraries
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(terra)
+library(tmap)
+library(gitcreds)
+library(dplyr)
+library(SimilarityMeasures)
+
+```
+
+
+# Demo
+
+```{r}
+testfun <- function(sometext){
+  a <- print("hi, ahahahahah!")
+  print(sometext)
+  return(a)
+}
+
+testfun("Hello")
+
+```
+
+Another one
+```{r}
+#Var1
+my_age <- function(birthday){
+  now <- Sys.time()
+  difftime(now, birthday)
+}
+
+#Var 2
+my_age1 <- function(birthday){
+  difftime(Sys.time(), birthday)
+}
+
+#Var 3
+my_age2 <- function(birthday, unit){
+  difftime(Sys.time(), birthday, unit=unit)
+}
+
+my_age("1998-10-30") #Ich bin bereits 8960.41 Tage alt!
+my_age("1940-09-17") #Nani ist 30187.45 Tage alt
+
+my_age2("1998-10-30", "mins")
+
+#Var 4
+my_age3 <- function(birthday, unit="days"){ #set default unit
+  difftime(Sys.time(), birthday)
+}
+
+my_age3("1998-10-30", unit="hours")#as well set default unit
+
+```
+
+Import wildboar data
+```{r}
+ww <- read_csv("wildschwein_BE_2056.csv")
+View(ww)
+
+```
+
+Calculate euclidean distances
+```{r}
+#mit c(0,1) wir die steplength verändert von ursprünglich direkt Punkt A zu Punkt B, zu vom Punkt A zum übernächsten Punkt. -> Cross-scale movement analysis
+euclidean_distance <- function(X = c(0,1), Y = c(0,1)){
+  sqrt((lead(X)-X)^2 + (lead(Y)-Y)^2)
+}
+
+ww |> 
+  mutate(
+    stepLength = euclidean_distance(E, N)
+  )
+
+```
+
+Finding meet patterns between Rosa and Sabi
+-> temporaly and spatially close
+```{r}
+wwf <- ww |> 
+  filter(TierName %in% c("Rosa", "Sabi")) |> 
+  #filer(TierName == "Rosa" ¦ TierName == "Sabi") -> makes the same
+  filter(DatetimeUTC >= as.POSIXct("2015-04-01 00:00:00", tz="UTC")) |> 
+  filter(DatetimeUTC <= as.POSIXct("2015-04-15 23:59:59", tz="UTC"))
+
+#be specific with times, avoid errors
+
+
+wwf |> 
+  ggplot(aes(E,N, colour = TierName))+
+  geom_point()+
+  coord_equal() #we see if they are at the same place but we need to include the time! 
+
+```
+
+
+
+Include Time -> join by DatetimeUTC
+```{r}
+wwf <- wwf |> 
+  select(-TierID, -CollarID) |> 
+  mutate(
+    Datetime_round = lubridate::round_date(DatetimeUTC, "15 minutes") 
+  )
+
+wwfr <- wwf |> 
+  filter(TierName == "Rosa")
+
+wwfs <- wwf |> 
+  filter(TierName == "Sabi")
+
+```
+
+
+Times are not synchronized, make new colomn that can be used as join key
+-> for project: rolling join, allows small time differences
+```{r}
+
+rosa_sabi <- dplyr::inner_join(wwfr, wwfs, "Datetime_round", suffix = c("_sabi", "_rosa"))
+
+rosa_sabi |>
+  mutate(
+    distance = sqrt((E_sabi - E_rosa)^2 + (N_sabi - N_rosa)^2),
+    meet = distance < 100
+  ) |>
+  filter(meet)
+
+
+
+```
+
+Visualize
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
