@@ -4,6 +4,7 @@ format: html
 ---
 
 Delete R memory
+
 ```{r}
 rm(list=ls())
 
@@ -24,8 +25,7 @@ library(SimilarityMeasures)
 
 ```
 
-
-# Demo
+# Preparation
 
 ```{r}
 testfun <- function(sometext){
@@ -39,6 +39,7 @@ testfun("Hello")
 ```
 
 Another one
+
 ```{r}
 #Var1
 my_age <- function(birthday){
@@ -70,14 +71,18 @@ my_age3("1998-10-30", unit="hours")#as well set default unit
 
 ```
 
-Import wildboar data
+# Tasks
+
+## Task 1: Write your own functions Import wildboar data
+
 ```{r}
 ww <- read_csv("wildschwein_BE_2056.csv")
 View(ww)
 
 ```
 
-Calculate euclidean distances
+Calculate euclidean distances before filtering the data set
+
 ```{r}
 #mit c(0,1) wir die steplength verändert von ursprünglich direkt Punkt A zu Punkt B, zu vom Punkt A zum übernächsten Punkt. -> Cross-scale movement analysis
 euclidean_distance <- function(X = c(0,1), Y = c(0,1)){
@@ -91,8 +96,10 @@ ww |>
 
 ```
 
-Finding meet patterns between Rosa and Sabi
--> temporaly and spatially close
+## Task 2: Prepare Analysis
+
+Finding meet patterns between Rosa and Sabi -\> temporaly and spatially close
+
 ```{r}
 wwf <- ww |> 
   filter(TierName %in% c("Rosa", "Sabi")) |> 
@@ -110,9 +117,10 @@ wwf |>
 
 ```
 
+## Task 3: Create Join Key
 
+Include Time -\> join by DatetimeUTC
 
-Include Time -> join by DatetimeUTC
 ```{r}
 wwf <- wwf |> 
   select(-TierID, -CollarID) |> 
@@ -120,89 +128,90 @@ wwf <- wwf |>
     Datetime_round = lubridate::round_date(DatetimeUTC, "15 minutes") 
   )
 
+```
+
+## Task 4: Measuring distance at concurrent locations
+
+```{r}
 wwfr <- wwf |> 
   filter(TierName == "Rosa")
 
 wwfs <- wwf |> 
   filter(TierName == "Sabi")
-
 ```
 
+Times are not synchronized, make new colomn that can be used as join key -\> for project: rolling join, allows small time differences
 
-Times are not synchronized, make new colomn that can be used as join key
--> for project: rolling join, allows small time differences
 ```{r}
 
 rosa_sabi <- dplyr::inner_join(wwfr, wwfs, "Datetime_round", suffix = c("_sabi", "_rosa"))
 
-rosa_sabi |>
+rosa_sabi <- rosa_sabi |>
   mutate(
     distance = sqrt((E_sabi - E_rosa)^2 + (N_sabi - N_rosa)^2),
-    meet = distance < 100
+    meet = if_else(distance < 100, T, F, missing = NULL)
+  ) #|>
+  #filter(meet == T)
+
+# -> 11 entries are TRUE for meet
+
+#only the meets
+
+rosab_meet <- rosa_sabi |>
+  mutate(
+    distance = sqrt((E_sabi - E_rosa)^2 + (N_sabi - N_rosa)^2),
+    meet = if_else(distance < 100, T, F, missing = NULL)
   ) |>
   filter(meet)
 
+```
 
+## Task 5: Visualize data
+
+```{r}
+
+as.factor(rosab_meet$meet)
+
+rosab <- rbind(wwfr, wwfs)
+
+tail(rosab)
+
+ggplot()+
+  geom_point(rosab, aes(E, N , colour = TierName))+
+  geom_point(rosab_meet, aes(E_sabi, N_sabi, shape = meet))+
+  coord_equal()
+
+  
+
+ggplot(wwfr, aes(E,N, colour=TierName), alpha = .2)+
+  geom_point(wwfs, aes(E,N, colour=TierName), alpha = .2)+
+  geom_point(rosab_meet, aes(E_sabi, N_sabi))+
+  coord_equal()
+
+#klappt leider noch nicht
+# Error in `geom_point()`:
+# ! `mapping` must be created by `aes()`
+# Backtrace:
+#  1. ggplot2::geom_point(wwfs, aes(E, N, colour = TierName), alpha = 0.2)
 
 ```
 
-Visualize
+## Task 6 (optional): Visualize data as timecube with plotly
+
 ```{r}
 
 ```
 
+# Now with the posmo data 
 
+## Task 7: Find "Meet Patterns" in your own tracking data
 
+Load data
+```{r}
+pp <- read_csv("posmo_1.csv")
+View(pp)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
